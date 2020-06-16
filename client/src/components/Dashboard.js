@@ -29,7 +29,7 @@ class DashBoard extends Component {
   }
 
   render() {
-    // console.log(this.props.mediaIDS);
+    console.log(this.props.mediaIDS);
     // console.log(this.props.accessToken);
     let cards = [];
     for (let i = 0; i < this.fakeIDS.length; i++) {

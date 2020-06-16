@@ -28,8 +28,20 @@ export default class Instagram extends Component {
   //   };
   // };
 
+  componentDidMount() {
+    console.log("From componentdidmount");
+    console.log(this.state.isLoggedIn);
+    console.log(this.state.code);
+    if (this.state.isLoggedIn) {
+      //Pass in code to retrieve access token
+      this.getToken(this.state.code);
+      //Pass in access token to retrieve username
+      this.getUsername(this.state.accessToken);
+    }
+  }
+
   responseInstagram = (response) => {
-    //console.log(response);
+    console.log(response);
     this.setState({
       isLoggedIn: true,
       code: response,
@@ -140,30 +152,6 @@ export default class Instagram extends Component {
     //     console.log(error);
     //   }
     // );
-    // await axios
-    //   .get(usernameUrl)
-    //   .then((response) => {
-    //     this.setState({ username: response.data["username"] });
-    //   })
-    //   .catch((err) => console.log(err));
-    // await axios
-    //   .get(mediaUrl)
-    //   .then((response) => {
-    //     console.log(response.data.data);
-    //   })
-    //   .catch((err) => console.log(err));
-    // axios.all([axios.get(usernameUrl), axios.get(mediaUrl)]).then(
-    //   (resArr) => {
-    //     this.setState({ username: resArr[0].data["id"] });
-    //   },
-    //   (errArr) => {
-    //     console.log("cmon");
-    //   }
-    // );
-  };
-
-  getDashboard = () => {
-    return <Dashboard mediaIDS={this.state.media} userID={this.state.userID} />;
   };
 
   render() {
@@ -172,9 +160,9 @@ export default class Instagram extends Component {
 
     if (this.state.isLoggedIn) {
       //Pass in code to retrieve access token
-      this.getToken(this.state.code);
+      //this.getToken(this.state.code);
       //Pass in access token to retrieve username
-      this.getUsername(this.state.accessToken);
+      //this.getUsername(this.state.accessToken);
 
       instaContent = (
         <div
