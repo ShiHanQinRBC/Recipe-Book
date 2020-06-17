@@ -7,47 +7,66 @@ class ViewPost extends Component {
     super(props);
     this.props = props;
     this.state = {
-      recipeExists: false,
+      uid: "",
       equipment: [],
       ingredients: [],
       instructions: [],
+      recipeExists: false,
     };
   }
-  render() {
-    db.collection("users")
-      .doc(this.props.location.state.userID.toString())
-      .get()
-      .then((snapshot) => {
-        //console.log(snapshot.data())
-        if (snapshot.data().recipeExists) {
-          console.log(snapshot.data());
-          console.log("RECIPE EXISTS");
-          this.setState({
-            recipeExists: true,
-            equipment: snapshot.data().equipment,
-            ingredients: snapshot.data().ingredients,
-            instructions: snapshot.data().instructions,
-          });
-        } else {
-          console.log("NEED TO ADD RECIPE");
-        }
-      })
-      .catch((err) => console.log(err));
 
+  componentDidMount() {
+    const recipeRef = db
+      .collection("recipes")
+      .doc(this.props.location.state.media.id.toString());
+    recipeRef.get().then((snapshot) => {
+      if (snapshot.exists) {
+        //Add another condition to check if the data exists AND it's not empty
+        console.log("exists!!");
+        this.setState({
+          recipeExists: true,
+          uid: snapshot.data().uid,
+          equipment: snapshot.data().equipment,
+          ingredients: snapshot.data().ingredients,
+          instructions: snapshot.data().instructions,
+        });
+      } else {
+        console.log("not exists!!");
+        // recipeRef.set({
+        //   uid: this.props.location.state.userID,
+        //   ingredients: [],
+        //   equipment: [],
+        //   instructions: [],
+        // });
+      }
+    });
+  }
+
+  render() {
     let content;
     if (this.state.recipeExists) {
       content = (
         <div>
           <h1>Your Recipe:</h1>
           <img
-            src={this.props.location.state.url}
+            src={this.props.location.state.media.url}
             alt="oh no"
             width="500"
             height="500"
           />
+          <h2> Equipment:</h2>
           <p>{this.state.equipment}</p>
+          <h2> Ingredients:</h2>
           <p>{this.state.ingredients}</p>
+          <h2> Instructions:</h2>
           <p>{this.state.instructions}</p>
+          <Link
+            to={{
+              pathname: "/dashboard",
+            }}
+          >
+            <button className="Login-button">Back to Dashboard</button>
+          </Link>
         </div>
       );
     } else {
@@ -58,14 +77,22 @@ class ViewPost extends Component {
             to={{
               pathname: "/editform",
               state: {
-                id: this.props.location.state.id,
-                url: this.props.location.state.url,
+                // id: this.props.location.state.id,
+                // url: this.props.location.state.url,
+                media: this.props.location.state.media,
                 userID: this.props.location.state.userID,
               },
               //state: { id: id, url: this.fakeURLS[id] },
             }}
           >
             <button className="Login-button">Add Recipe</button>
+          </Link>
+          <Link
+            to={{
+              pathname: "/dashboard",
+            }}
+          >
+            <button className="Login-button">Back to Dashboard</button>
           </Link>
         </div>
       );

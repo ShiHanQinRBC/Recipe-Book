@@ -28,24 +28,11 @@ export default class Instagram extends Component {
   //   };
   // };
 
-  componentDidMount() {
-    console.log("From componentdidmount");
-    console.log(this.state.isLoggedIn);
-    console.log(this.state.code);
-    if (this.state.isLoggedIn) {
-      //Pass in code to retrieve access token
-      this.getToken(this.state.code);
-      //Pass in access token to retrieve username
-      this.getUsername(this.state.accessToken);
-    }
-  }
-
   responseInstagram = (response) => {
     console.log(response);
-    this.setState({
-      isLoggedIn: true,
-      code: response,
-    });
+
+    //Pass in code to retrieve access token
+    this.getToken(response);
   };
 
   responseInstagramFail = (response) => {
@@ -58,16 +45,6 @@ export default class Instagram extends Component {
     userRef
       .get()
       .then((snapshot) => {
-        // if (snapshot.exists) {
-        //   console.log("exists!!");
-        // } else {
-        //   userRef.set({
-        //     id: user.id,
-        //     ingredients: [],
-        //     equipment: [],
-        //     instructions: [],
-        //   });
-        // }
         if (!snapshot.exists) {
           //Only add user if they don't already exist
           userRef.set({
@@ -83,11 +60,12 @@ export default class Instagram extends Component {
   };
 
   getToken = async (code) => {
+    console.log("got to getToken");
     const data = new FormData();
     data.append("client_id", "291881972197269");
     data.append("client_secret", "4aec258d012851ac0d7bc1573fa529b2");
     data.append("grant_type", "authorization_code");
-    data.append("redirect_uri", "https://841066b9b1d1.ngrok.io/");
+    data.append("redirect_uri", "https://723be80f237e.ngrok.io/");
     data.append("code", code);
 
     const headers = {
@@ -102,15 +80,11 @@ export default class Instagram extends Component {
       )
       .then(
         (response) => {
-          // console.log(response.data["user_id"]);
+          //console.log(response);
           const accessToken = response.data["access_token"];
           const userID = response.data["user_id"];
           this.addUser({ token: accessToken, id: userID });
-          this.setState({
-            //accessToken: response.data["access_token"],
-            accessToken: accessToken,
-            userID: userID,
-          });
+          this.getUsername(accessToken, userID);
         },
         (error) => {
           console.log(error);
@@ -118,8 +92,9 @@ export default class Instagram extends Component {
       );
   };
 
-  getUsername = async (token) => {
-    //console.log(token);
+  getUsername = async (token, userID) => {
+    console.log("got to get username");
+    console.log(token);
     const usernameUrl =
       "https://cors-anywhere.herokuapp.com/https://graph.instagram.com/me?fields=username&access_token=" +
       token;
@@ -130,40 +105,59 @@ export default class Instagram extends Component {
     try {
       const userRes = await axios.get(usernameUrl);
       const mediaRes = await axios.get(mediaUrl);
-      //console.log(mediaRes.data.data);
+      console.log(userRes);
+      console.log(mediaRes);
+      // this.setState({
+      //   userID: userID,
+      //   username: userRes.data["username"],
+      //   media: mediaRes.data.data,
+      //   isLoggedIn: true,
+      // });
+      //Array of objects containing the picture id and url of each post
+      const picInfo = [];
+      for (let i = 0; i < mediaRes.data.data.length; i++) {
+        let tempUrl = this.getPictureURL(mediaRes.data.data[i].id, token);
+
+        tempUrl.then((res) => {
+          picInfo.push({
+            id: mediaRes.data.data[i].id,
+            url: res, //this.getPictureURL(mediaRes.data.data[i].id, token),
+          });
+          //temp = res;
+        });
+      }
       this.setState({
+        userID: userID,
         username: userRes.data["username"],
-        media: mediaRes.data.data,
+        media: picInfo,
+        //media: mediaRes.data.data,
+        isLoggedIn: true,
       });
     } catch (err) {
       console.log(err);
     }
-    // await axios.get(usernameUrl).then(
-    //   (response) => {
-    //     this.setState({ username: response.data["username"] });
-    //   },
-    //   (error) => console.log(error)
-    // );
-    // await axios.get(mediaUrl).then(
-    //   (response) => {
-    //     console.log(response.data.data);
-    //   },
-    //   (error) => {
-    //     console.log(error);
-    //   }
-    // );
+  };
+
+  getPictureURL = async (id, token) => {
+    console.log("got to getpicurl");
+    const picURL =
+      "https://graph.instagram.com/" +
+      id +
+      "?fields=media_type,media_url,username,timestamp&access_token=" +
+      token;
+
+    try {
+      const res = await axios.get(picURL);
+      return res.data.media_url;
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   render() {
     let instaContent;
-    //console.log(this.state.code);
 
     if (this.state.isLoggedIn) {
-      //Pass in code to retrieve access token
-      //this.getToken(this.state.code);
-      //Pass in access token to retrieve username
-      //this.getUsername(this.state.accessToken);
-
       instaContent = (
         <div
           style={{
@@ -174,12 +168,11 @@ export default class Instagram extends Component {
           }}
         >
           <h2>Welcome {this.state.username} !</h2>
-          {/* {console.log(this.state.media)}
-          {console.log(this.state.accessToken)} */}
           <Dashboard
-            mediaIDS={this.state.media}
-            accessToken={this.state.accessToken}
+            media={this.state.media}
+            //accessToken={this.state.accessToken}
             userID={this.state.userID}
+            username={this.state.username}
           />
         </div>
       );
